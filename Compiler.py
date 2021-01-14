@@ -39,7 +39,6 @@ class Compiler(Parser):
                 current_instructions += '\nINC a'
         return (current_instructions, instructions_counter + 1)
 
-    #### dla k = 10 powinno zwrocic 7 bo k - arr(0) + arr(1) , a jak arr(1)> arr(0) arr(1)- arr(0) + k to
     def load_proper_cell_for_variable(self, identifier):
         if len(identifier) == 2:
             return self.load_constant_value(variables[identifier[1]])
@@ -51,7 +50,6 @@ class Compiler(Parser):
                     return self.concat_commands(load_variable, self.load_constant_value(array[0] - array[2]), ('\nSUB b a\nRESET a\nADD a b', 3))
                 else:
                     return self.concat_commands(load_variable, self.load_constant_value(array[2] - array[0]), ('\nADD a b', 1))
-                    # return self.load_constant_value(variables[identifier[1]])
             else:
                 return self.load_constant_value(identifier[3] - arrays[identifier[1]][0] + arrays[identifier[1]][2])
 
@@ -207,13 +205,16 @@ class Compiler(Parser):
     def expression(self, p):
         return self.concat_commands(p.value0, (f'\nRESET c\nADD c a\nJZERO a {14 + p.value1[1]}', 3), p.value1, (f'\nRESET d\nRESET b\nADD d a\nJZERO a 10\nJODD c 2\nJUMP 2\nADD b a\nSHL a\nSHR c\nJZERO c 2\nJUMP -6\nRESET a\nADD a b', 13))
 
-    # @_('value DIV value')
-    # def expression(self, p):
-    #     return p
-    #
-    # @_('value MOD value')
-    # def expression(self, p):
-    #     return p
+    @_('value DIV value')
+    def expression(self, p):
+        return p
+
+    @_('value MOD value')
+    def expression(self, p):
+        STORE_VALUES = self.concat_commands(p.value1, ('\nRESET c\nADD c a\nRESET f\nRESET d\nRESET e\nADD e a', 6), p.value0, ('\nADD d a', 1))
+        FIND_HIGHEST_POWER = ('\nSUB a c\nJZERO a 5\nADD a c\nSHL c\nINC f\nJUMP -5\nADD a d\nJZERO f 8\nSHR c\nSUB a c\nSUB d c\nRESET c\nADD c e\nRESET f\nJUMP -14', 15)
+        END_CONDITION = self.concat_commands(('\nRESET c\nADD c a\nRESET d\nADD d a', 4), p.value1, ('\nINC c\nSUB c a\nRESET a\nJODD c 2\nADD a d', 5))
+        return self.concat_commands(STORE_VALUES, FIND_HIGHEST_POWER, END_CONDITION)
 
     @_('value "=" value')
     def condition(self, p):
