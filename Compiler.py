@@ -1,8 +1,6 @@
 import sys
 
-from sly import Lexer, Parser
-# import LanguageLexer
-from LanguageLexer import Lexer
+from sly import Parser
 from LanguageLexer import LanguageLexer
 
 register_number = 1
@@ -41,17 +39,26 @@ class Compiler(Parser):
                 current_instructions += '\nINC a'
         return (current_instructions, instructions_counter + 1)
 
+    #### dla k = 10 powinno zwrocic 7 bo k - arr(0) + arr(1) , a jak arr(1)> arr(0) arr(1)- arr(0) + k to
     def load_proper_cell_for_variable(self, identifier):
         if len(identifier) == 2:
             return self.load_constant_value(variables[identifier[1]])
         elif len(identifier) == 5:
-            if type(identifier) == type(''):
-                pass
+            if type(identifier[3]) == type(''):
+                array = arrays[identifier[1]]
+                load_variable = self.concat_commands(self.load_constant_value(variables[identifier[3]]), ('\nLOAD b a', 1))
+                if array[0] > array[2]:
+                    return self.concat_commands(load_variable, self.load_constant_value(array[0] - array[2]), ('\nSUB b a\nRESET a\nADD a b', 3))
+                else:
+                    return self.concat_commands(load_variable, self.load_constant_value(array[2] - array[0]), ('\nADD a b', 1))
+                    # return self.load_constant_value(variables[identifier[1]])
             else:
-                pass
-        print(variables)
-        print(arrays)
-        print(identifier)
+                return self.load_constant_value(identifier[3] - arrays[identifier[1]][0] + arrays[identifier[1]][2])
+
+    def create_temporary_variable(self):
+        global register_number
+        self.define_new_variable(f'TEMPORARY_VARIABLE_{register_number}')
+        return ('value', f'TEMPORARY_VARIABLE_{register_number - 1}')
 
     def define_new_array(self, PIDENTIFIER, NUM0, NUM1):
         global register_number
@@ -74,6 +81,28 @@ class Compiler(Parser):
         else:
             variables[PIDENTIFIER] = register_number
             register_number += 1
+
+    def substitute_and_store_loop_values(self, value1, value2, LOOP_ITERATOR, increment):
+        if increment:
+            first_value = value1
+            second_value = value2
+        else:
+            first_value = value2
+            second_value = value1
+
+        LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET b\nADD b a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE b a', 1))
+        LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
+        STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC a\nSUB a b\nRESET b\nADD b a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE b a', 1))
+        return (STORE_ITERATIONS_COUNTER, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
+
+    def load_variable_increment_or_decrement_and_save(self, variable, increment):
+        INC_OR_DEC = 'INC b' if increment else 'DEC b'
+        return self.concat_commands(self.load_proper_cell_for_variable(variable), (f'\nLOAD b a\n{INC_OR_DEC}\nSTORE b a', 3))
+
+    def verify_iterator_increment_and_save(self, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, increment):
+        UPDATE_ITERATOR = self.load_variable_increment_or_decrement_and_save(LOOP_ITERATOR, increment)
+        LOAD_ITERATIONS_COUNTER = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nLOAD b a\nJZERO b 5\nDEC b\nSTORE b a\nRESET a', 5))
+        return self.concat_commands(UPDATE_ITERATOR, LOAD_ITERATIONS_COUNTER)
 
     def __init__(self):
         self.names = {}
@@ -117,38 +146,46 @@ class Compiler(Parser):
     @_('identifier ASSIGN expression ";"')
     def command(self, p):
         self.verify_variable(p.identifier)
-        STORE_AT_PROPER_CELL = self.load_proper_cell_for_variable(p.identifier)
-        return self.concat_commands(p.expression, ('\nRESET b\nADD b a', 2), STORE_AT_PROPER_CELL, ('\nSTORE b a', 1))
+        return self.concat_commands(p.expression, ('\nRESET b\nADD b a', 2), self.load_proper_cell_for_variable(p.identifier), ('\nSTORE b a', 1))
 
     @_('IF condition THEN commands ELSE commands ENDIF')
     def command(self, p):
-        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {2 + p.commands0[1]}', 2), p.commands0,
-                                    (f'\nJUMP {p.commands1[1] + 1}', 1), p.commands1)
+        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {2 + p.commands0[1]}', 2), p.commands0, (f'\nJUMP {p.commands1[1] + 1}', 1), p.commands1)
 
     @_('IF condition THEN commands ENDIF')
     def command(self, p):
-        return p
+        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {1 + p.commands[1]}', 2), p.commands)
 
     @_('WHILE condition DO commands ENDWHILE')
     def command(self, p):
-        return p
+        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {2 + p.commands[1]}', 2), p.commands, (f'JUMP -{3 + p.commands[1] + p.condition[1]}', 1))
 
     @_('REPEAT commands UNTIL condition ";"')
     def command(self, p):
-        return p
+        return self.concat_commands(p.commands, p.condition, (f'JZERO a -{1 + p.commands[1] + p.condition[1]}', 1))
 
-    @_('FOR PIDENTIFIER FROM value TO value DO commands ENDFOR')
+    @_('FOR iterator FROM value TO value DO commands ENDFOR')
     def command(self, p):
-        return p
+        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, True)
+        LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, True)
+        VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
+        return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_INCREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_INCREMENT_AND_SAVE[1] + p.commands[1]}', 1))
 
-    @_('FOR PIDENTIFIER FROM value DOWNTO value DO commands ENDFOR')
+    @_('FOR iterator FROM value DOWNTO value DO commands ENDFOR')
     def command(self, p):
-        return p
+        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, False)
+        LOAD_ITERATOR_DECREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, False)
+        VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_DECREMENT_AND_SAVE[1]}', 2))
+        return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_DECREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_DECREMENT_AND_SAVE[1] + p.commands[1]}', 1))
+
+    @_('PIDENTIFIER')
+    def iterator(self, p):
+        self.define_new_variable(p.PIDENTIFIER)
+        return ('value', p.PIDENTIFIER)
 
     @_('READ identifier ";"')
     def command(self, p):
-        LOAD_CELL_NUMBER = self.load_proper_cell_for_variable(p.identifier)
-        return self.concat_commands(LOAD_CELL_NUMBER, ('\nGET a ', 1))
+        return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nGET a ', 1))
 
     @_('WRITE value ";"')
     def command(self, p):
@@ -158,59 +195,49 @@ class Compiler(Parser):
     def expression(self, p):
         return p.value
 
-    @_('value "+" value')
+    @_('value PLUS value')
     def expression(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value0, STORE_TEMPORARLY_AT_B, p.value1, ('\nADD a b', 1))
+        return self.concat_commands(p.value0, ('\nRESET b\nADD b a', 2), p.value1, ('\nADD a b', 1))
 
-    @_('value "-" value')
+    @_('value MINUS value')
     def expression(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value1, STORE_TEMPORARLY_AT_B, p.value0, ('\nSUB a b', 1))
+        return self.concat_commands(p.value1, ('\nRESET b\nADD b a', 2), p.value0, ('\nSUB a b', 1))
 
-    @_('value "*" value')
+    @_('value TIMES value')
     def expression(self, p):
-        return p
+        return self.concat_commands(p.value0, (f'\nRESET c\nADD c a\nJZERO a {14 + p.value1[1]}', 3), p.value1, (f'\nRESET d\nRESET b\nADD d a\nJZERO a 10\nJODD c 2\nJUMP 2\nADD b a\nSHL a\nSHR c\nJZERO c 2\nJUMP -6\nRESET a\nADD a b', 13))
 
-    @_('value "/" value')
-    def expression(self, p):
-        return p
-
-    @_('value "%" value')
-    def expression(self, p):
-        return p
+    # @_('value DIV value')
+    # def expression(self, p):
+    #     return p
+    #
+    # @_('value MOD value')
+    # def expression(self, p):
+    #     return p
 
     @_('value "=" value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B_AND_C = '\nRESET b\nADD b a\nRESET c\nADD c a', 4
-        return self.concat_commands(p.value1, STORE_TEMPORARLY_AT_B_AND_C, p.value0,
-                                    ('\nSUB b a\nJZERO b 2\nJUMP 3\nSUB a c\nJZERO a 2\nINC a', 6))
+        return self.concat_commands(p.value1, ('\nRESET b\nADD b a\nRESET c\nADD c a', 4), p.value0, ('\nSUB b a\nJZERO b 2\nJUMP 3\nSUB a c\nJZERO a 2\nINC a', 6))
 
     @_('value NEQ value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B_AND_C = '\nRESET b\nADD b a\nRESET c\nADD c a', 4
-        return self.concat_commands(p.value1, STORE_TEMPORARLY_AT_B_AND_C, p.value0, (
-            '\nSUB b a\nSUB a c\nJZERO a 2\nJUMP 2\nJZERO b 3\nRESET a\nJUMP 2\nINC a', 8))
+        return self.concat_commands(p.value1, ('\nRESET b\nADD b a\nRESET c\nADD c a', 4), p.value0, ('\nSUB b a\nSUB a c\nJZERO a 2\nJUMP 2\nJZERO b 3\nRESET a\nJUMP 2\nINC a', 8))
 
     @_('value LE value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value1, STORE_TEMPORARLY_AT_B, p.value0, ('\nINC a\nSUB a b', 2))
+        return self.concat_commands(p.value1, ('\nRESET b\nADD b a', 2), p.value0, ('\nINC a\nSUB a b', 2))
 
     @_('value GE value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value0, STORE_TEMPORARLY_AT_B, p.value1, ('\nINC a\nSUB a b', 2))
+        return self.concat_commands(p.value0, ('\nRESET b\nADD b a', 2), p.value1, ('\nINC a\nSUB a b', 2))
 
     @_('value LEQ value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value1, STORE_TEMPORARLY_AT_B, p.value0, ('\nSUB a b', 1))
+        return self.concat_commands(p.value1, ('\nRESET b\nADD b a', 2), p.value0, ('\nSUB a b', 1))
 
     @_('value GEQ value')
     def condition(self, p):
-        STORE_TEMPORARLY_AT_B = '\nRESET b\nADD b a', 2
-        return self.concat_commands(p.value0, STORE_TEMPORARLY_AT_B, p.value1, ('\nSUB a b', 1))
+        return self.concat_commands(p.value0, ('\nRESET b\nADD b a', 2), p.value1, ('\nSUB a b', 1))
 
     @_('NUM')
     def value(self, p):
@@ -218,8 +245,7 @@ class Compiler(Parser):
 
     @_('identifier')
     def value(self, p):
-        LOAD_CELL_NUMBER = self.load_proper_cell_for_variable(p.identifier)
-        return self.concat_commands(LOAD_CELL_NUMBER, ('\nLOAD a a', 1))
+        return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nLOAD a a', 1))
 
     @_('PIDENTIFIER')
     def identifier(self, p):

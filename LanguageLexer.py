@@ -5,8 +5,11 @@ class LanguageLexer(Lexer):
     # tokens = { NAME, NUMBER, PLUS, TIMES, MINUS, DIVIDE, ASSIGN, LPAREN, RPAREN }
     tokens = {DECLARE, BEGIN, END,
               # SEMICOLON, COMMA,
+              # TIMES,
+
               NUM,
-              # PLUS, MINUS, TIMES, DIV, MOD,
+              TIMES, PLUS, MINUS, DIV, MOD,
+
               NEQ, LEQ, GEQ, LE, GE,
               ASSIGN,
               # LEFT_BRACKET, RIGHT_BRACKET, COLON,
@@ -17,12 +20,18 @@ class LanguageLexer(Lexer):
               PIDENTIFIER
               }
 
-##### ODPOWIEDNIO USTAWIC ENDIFY NA ODP WYSOKOSCI ITP
-
-    literals = {';', ',', '(', ')', '+', '-', '*', '/', '%', '=', ':'}
+    ##### ODPOWIEDNIO USTAWIC ENDIFY NA ODP WYSOKOSCI ITP
+    # TIMES = r'\*'
+    literals = {';', ',', '(', ')', '+', '-', '/', '%', '=', ':'}
 
     DECLARE = r'DECLARE'
     BEGIN = r'BEGIN'
+
+    PLUS = r'\+'
+    MINUS = r'-'
+    TIMES = r'\*'
+    DIV = r'/'
+    MOD = r'%'
 
     ASSIGN = r':='
     LEQ = r'<='
@@ -31,17 +40,16 @@ class LanguageLexer(Lexer):
     GE = r'>'
     NEQ = r'!='
 
-
     IF = r'IF'
     THEN = r'THEN'
     ELSE = r'ELSE'
     ENDIF = r'ENDIF'
 
+    DOWNTO = r'DOWNTO'
     DO = r'DO'
     FOR = r'FOR'
     FROM = r'FROM'
     TO = r'TO'
-    DOWNTO = r'DOWNTO'
     ENDFOR = r'ENDFOR'
 
     REPEAT = r'REPEAT'
@@ -54,17 +62,17 @@ class LanguageLexer(Lexer):
     END = r'END'
     PIDENTIFIER = r'[_a-z]+'
 
-    PIDENTIFIER['DECLARE'] = DECLARE
-    PIDENTIFIER['BEGIN'] = BEGIN
-    PIDENTIFIER['IF'] = IF
-    PIDENTIFIER['THEN'] = THEN
-    PIDENTIFIER['ELSE'] = ELSE
-    PIDENTIFIER['ENDIF'] = ENDIF
-    PIDENTIFIER['END'] = END
+    # PIDENTIFIER['DECLARE'] = DECLARE
+    # PIDENTIFIER['BEGIN'] = BEGIN
+    # PIDENTIFIER['IF'] = IF
+    # PIDENTIFIER['THEN'] = THEN
+    # PIDENTIFIER['ELSE'] = ELSE
+    # PIDENTIFIER['ENDIF'] = ENDIF
+    # PIDENTIFIER['END'] = END
 
-    ignore = "[ \t\n]*"
+    ignore = " \t\n"
 
-    @_(r'\d+')
+    @_(r'[0-9]+')
     def NUM(self, t):
         t.value = int(t.value)  # Convert to a numeric value
         return t
