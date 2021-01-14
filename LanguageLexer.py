@@ -1,8 +1,7 @@
-from sly import Lexer, Parser
+from sly import Lexer
 
 
 class LanguageLexer(Lexer):
-    # tokens = { NAME, NUMBER, PLUS, TIMES, MINUS, DIVIDE, ASSIGN, LPAREN, RPAREN }
     tokens = {DECLARE, BEGIN, END,
               # SEMICOLON, COMMA,
               # TIMES,

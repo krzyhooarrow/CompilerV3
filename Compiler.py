@@ -207,14 +207,17 @@ class Compiler(Parser):
 
     @_('value DIV value')
     def expression(self, p):
-        return p
+        STORE_VALUES = self.concat_commands(p.value1, (f'\nRESET c\nADD c a\nRESET d\nADD d a\nJZERO a {30 + p.value0[1]}', 5), p.value0, ('\nRESET b\nADD b a\nRESET e\nRESET f\nINC e', 5))
+        DIVIDE = ('\nSUB a c\nJZERO a 5\nADD a c\nSHL c\nSHL e\nJUMP -5\nJODD e 12\nSHR c\nSUB b c\nRESET a\nADD a b\nRESET c\nADD c d\nSHR e\nADD f e\nRESET e\nINC e\nJUMP -17', 18)
+        RETURN_PARTIAL_SUM = ('\nSUB d b\nJZERO d 2\nJUMP 2\nINC f\nRESET a\nADD a f', 6)
+        return self.concat_commands(STORE_VALUES, DIVIDE, RETURN_PARTIAL_SUM)
 
     @_('value MOD value')
     def expression(self, p):
-        STORE_VALUES = self.concat_commands(p.value1, ('\nRESET c\nADD c a\nRESET f\nRESET d\nRESET e\nADD e a', 6), p.value0, ('\nADD d a', 1))
-        FIND_HIGHEST_POWER = ('\nSUB a c\nJZERO a 5\nADD a c\nSHL c\nINC f\nJUMP -5\nADD a d\nJZERO f 8\nSHR c\nSUB a c\nSUB d c\nRESET c\nADD c e\nRESET f\nJUMP -14', 15)
-        END_CONDITION = self.concat_commands(('\nRESET c\nADD c a\nRESET d\nADD d a', 4), p.value1, ('\nINC c\nSUB c a\nRESET a\nJODD c 2\nADD a d', 5))
-        return self.concat_commands(STORE_VALUES, FIND_HIGHEST_POWER, END_CONDITION)
+        STORE_VALUES = self.concat_commands(p.value1, (f'\nRESET c\nADD c a\nRESET f\nRESET d\nRESET e\nADD e a\nJZERO a {26 + p.value0[1] + p.value1[1]}', 7), p.value0, ('\nADD d a', 1))
+        REMOVE_FROM_HIGHEST_POWER_TO_LOWEST = ('\nSUB a c\nJZERO a 5\nADD a c\nSHL c\nINC f\nJUMP -5\nADD a d\nJZERO f 8\nSHR c\nSUB a c\nSUB d c\nRESET c\nADD c e\nRESET f\nJUMP -14', 15)
+        RETURN_VALUE = self.concat_commands(('\nRESET c\nADD c a\nRESET d\nADD d a', 4), p.value1, ('\nINC c\nSUB c a\nRESET a\nJODD c 2\nADD a d', 5))
+        return self.concat_commands(STORE_VALUES, REMOVE_FROM_HIGHEST_POWER_TO_LOWEST, RETURN_VALUE)
 
     @_('value "=" value')
     def condition(self, p):
