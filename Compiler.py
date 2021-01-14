@@ -234,27 +234,27 @@ class Compiler(Parser):
 
     @_('value "=" value')
     def condition(self, p):
-        return self.concat_commands(p.value1, ('\nRESET b\nADD b a\nRESET c\nADD c a', 4), p.value0, ('\nSUB b a\nJZERO b 2\nJUMP 3\nSUB a c\nJZERO a 2\nINC a', 6))
+        return self.concat_commands(p.value1, ('\nRESET d\nADD d a\nRESET c\nADD c a', 4), p.value0, ('\nSUB d a\nJZERO d 2\nJUMP 3\nSUB a c\nJZERO a 2\nINC a', 6))
 
     @_('value NEQ value')
     def condition(self, p):
-        return self.concat_commands(p.value1, ('\nRESET b\nADD b a\nRESET c\nADD c a', 4), p.value0, ('\nSUB b a\nSUB a c\nJZERO a 2\nJUMP 2\nJZERO b 3\nRESET a\nJUMP 2\nINC a', 8))
+        return self.concat_commands(p.value1, ('\nRESET d\nADD d a\nRESET c\nADD c a', 4), p.value0, ('\nSUB d a\nSUB a c\nJZERO a 2\nJUMP 2\nJZERO d 3\nRESET a\nJUMP 2\nINC a', 8))
 
     @_('value LE value')
     def condition(self, p):
-        return self.concat_commands(p.value1, ('\nRESET b\nADD b a', 2), p.value0, ('\nINC a\nSUB a b', 2))
+        return self.concat_commands(p.value1, ('\nRESET d\nADD d a', 2), p.value0, ('\nINC a\nSUB a d', 2))
 
     @_('value GE value')
     def condition(self, p):
-        return self.concat_commands(p.value0, ('\nRESET b\nADD b a', 2), p.value1, ('\nINC a\nSUB a b', 2))
+        return self.concat_commands(p.value0, ('\nRESET d\nADD d a', 2), p.value1, ('\nINC a\nSUB a d', 2))
 
     @_('value LEQ value')
     def condition(self, p):
-        return self.concat_commands(p.value1, ('\nRESET b\nADD b a', 2), p.value0, ('\nSUB a b', 1))
+        return self.concat_commands(p.value1, ('\nRESET d\nADD d a', 2), p.value0, ('\nSUB a d', 1))
 
     @_('value GEQ value')
     def condition(self, p):
-        return self.concat_commands(p.value0, ('\nRESET b\nADD b a', 2), p.value1, ('\nSUB a b', 1))
+        return self.concat_commands(p.value0, ('\nRESET d\nADD d a', 2), p.value1, ('\nSUB a d', 1))
 
     @_('NUM')
     def value(self, p):
