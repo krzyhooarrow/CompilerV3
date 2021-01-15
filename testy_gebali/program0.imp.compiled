@@ -12,22 +12,22 @@ SHL a
 SHL a
 SHL a
 INC a
-RESET b
-ADD b a
+RESET f
+ADD f a
 RESET a
 SHL a
 INC a
-STORE b a
+STORE f a
 RESET a
 SHL a
 INC a
 LOAD a a
-RESET b
-ADD b a
+RESET d
+ADD d a
 RESET a
 SHL a
 INC a
-SUB a b
+SUB a d
 JZERO a 2
 JUMP 158
 RESET a
@@ -72,13 +72,13 @@ JUMP 2
 INC f
 RESET a
 ADD a f
-RESET b
-ADD b a
+RESET f
+ADD f a
 RESET a
 SHL a
 INC a
 SHL a
-STORE b a
+STORE f a
 RESET a
 SHL a
 INC a
@@ -104,26 +104,26 @@ JZERO c 2
 JUMP -6
 RESET a
 ADD a b
-RESET b
-ADD b a
+RESET f
+ADD f a
 RESET a
 SHL a
 INC a
 SHL a
-STORE b a
+STORE f a
 RESET a
 SHL a
 INC a
 LOAD a a
-RESET b
-ADD b a
+RESET d
+ADD d a
 RESET a
 SHL a
 INC a
 SHL a
 LOAD a a
 INC a
-SUB a b
+SUB a d
 JZERO a 2
 JUMP 8
 RESET a
@@ -180,10 +180,11 @@ JUMP 2
 INC f
 RESET a
 ADD a f
-RESET b
-ADD b a
+RESET f
+ADD f a
 RESET a
 SHL a
 INC a
-STORE b aJUMP -169
+STORE f a
+JUMP -169
 HALT

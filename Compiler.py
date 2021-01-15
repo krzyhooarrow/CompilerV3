@@ -30,7 +30,7 @@ class Compiler(Parser):
 
     def verify_initialization(self, identifier):
         if len(identifier) == 2 and identifier[1] not in initialized_variables:
-            raise Exception("Variable not initialized")
+            raise Exception("Variable not initialized: " + str(identifier))
         # elif len(identifier) == 5:
         #     if identifier[1] not in arrays:
         #         raise Exception("Array not declared")
@@ -199,6 +199,7 @@ class Compiler(Parser):
 
     @_('PIDENTIFIER')
     def iterator(self, p):
+        self.initialize_variable(('identifier',p.PIDENTIFIER))
         self.define_new_variable(p.PIDENTIFIER)
         return ('value', p.PIDENTIFIER)
 
