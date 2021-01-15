@@ -50,8 +50,6 @@ from specified language to delivered wirtual machine language (desc below).
 
 
 ### Program example
-Prints value converted to binary.
-
 
 ```diff
 1 [ Rozkład liczby na czynniki pierwsze ]
