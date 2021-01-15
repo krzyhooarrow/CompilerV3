@@ -101,16 +101,14 @@ class Compiler(Parser):
             # temp_vars.remove(id[1])
 
     def substitute_and_store_loop_values(self, value1, value2, LOOP_ITERATOR, increment):
-        first_value = value1
-        second_value = value2
         if increment:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
+            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(value1, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
             LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC a\nSUB a f\nRESET f\nADD f a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
+            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, value2, ('\nINC a\nSUB a f\nRESET f\nADD f a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
         else:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
+            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(value1, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
             LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC f\nSUB f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
+            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, value2, ('\nINC f\nSUB f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
 
         return (STORE_ITERATIONS_COUNTER, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
 
@@ -122,6 +120,13 @@ class Compiler(Parser):
         UPDATE_ITERATOR = self.load_variable_increment_or_decrement_and_save(LOOP_ITERATOR, increment)
         LOAD_ITERATIONS_COUNTER = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nLOAD b a\nJZERO b 5\nDEC b\nSTORE b a\nRESET a', 5))
         return self.concat_commands(UPDATE_ITERATOR, LOAD_ITERATIONS_COUNTER)
+
+    def loop(self, p, IS_UPTO_TYPE):
+        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, IS_UPTO_TYPE)
+        LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, IS_UPTO_TYPE)
+        VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
+        self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
+        return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_INCREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_INCREMENT_AND_SAVE[1] + p.commands[1]}', 1))
 
     def __init__(self):
         self.names = {}
@@ -184,28 +189,13 @@ class Compiler(Parser):
     def command(self, p):
         return self.concat_commands(p.commands, p.condition, (f'\nJZERO a 2\nJUMP -{1 + p.commands[1] + p.condition[1]}', 2))
 
-    # def loop(self,IS_UPTO_TYPE):
-    #     STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, IS_UPTO_TYPE)
-    #     LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, IS_UPTO_TYPE)
-    #     VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
-    #     self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
-    #     return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_INCREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_INCREMENT_AND_SAVE[1] + p.commands[1]}', 1))
-
     @_('FOR iterator FROM value TO value DO commands ENDFOR')
     def command(self, p):
-        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, True)
-        LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, True)
-        VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
-        self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
-        return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_INCREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_INCREMENT_AND_SAVE[1] + p.commands[1]}', 1))
+        return self.loop(p, True)
 
     @_('FOR iterator FROM value DOWNTO value DO commands ENDFOR')
     def command(self, p):
-        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, False)
-        LOAD_ITERATOR_DECREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, False)
-        VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_DECREMENT_AND_SAVE[1]}', 2))
-        self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
-        return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_DECREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_DECREMENT_AND_SAVE[1] + p.commands[1]}', 1))
+        return self.loop(p, False)
 
     @_('PIDENTIFIER')
     def iterator(self, p):
