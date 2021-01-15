@@ -3,15 +3,10 @@ from sly import Lexer
 
 class LanguageLexer(Lexer):
     tokens = {DECLARE, BEGIN, END,
-              # SEMICOLON, COMMA,
-              # TIMES,
-
               NUM,
               TIMES, PLUS, MINUS, DIV, MOD,
-
               NEQ, LEQ, GEQ, LE, GE,
               ASSIGN,
-              # LEFT_BRACKET, RIGHT_BRACKET, COLON,
               IF, THEN, ELSE, ENDIF,
               WHILE, ENDWHILE, DO,
               REPEAT, UNTIL, FOR, FROM, TO, DOWNTO, ENDFOR,
@@ -19,8 +14,6 @@ class LanguageLexer(Lexer):
               PIDENTIFIER
               }
 
-    ##### ODPOWIEDNIO USTAWIC ENDIFY NA ODP WYSOKOSCI ITP
-    # TIMES = r'\*'
     literals = {';', ',', '(', ')', '+', '-', '/', '%', '=', ':'}
 
     DECLARE = r'DECLARE'
@@ -61,15 +54,21 @@ class LanguageLexer(Lexer):
     END = r'END'
     PIDENTIFIER = r'[_a-z]+'
 
-    # PIDENTIFIER['DECLARE'] = DECLARE
-    # PIDENTIFIER['BEGIN'] = BEGIN
-    # PIDENTIFIER['IF'] = IF
-    # PIDENTIFIER['THEN'] = THEN
-    # PIDENTIFIER['ELSE'] = ELSE
-    # PIDENTIFIER['ENDIF'] = ENDIF
-    # PIDENTIFIER['END'] = END
+    @_(r'\n+')
+    def ignore_newline(self, t):
+        self.lineno += len(t.value)
 
-    ignore = " \t\n"
+    @_(r'\t+')
+    def ignore_tabs(self, t):
+        self.lineno += len(t.value)
+
+    @_(r' ')
+    def ignore_spaces(self, t):
+        self.lineno += len(t.value)
+
+    @_(r'\[[^\]]*\]')
+    def ignore_comments(self, t):
+        self.lineno += len(t.value)
 
     @_(r'[0-9]+')
     def NUM(self, t):
