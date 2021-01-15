@@ -28,6 +28,20 @@ class Compiler(Parser):
             if identifier[1] not in arrays:
                 raise Exception("Array not declared")
 
+    def verify_initialization(self, identifier):
+        if len(identifier) == 2 and identifier[1] not in initialized_variables:
+            raise Exception("Variable not initialized")
+        # elif len(identifier) == 5:
+        #     if identifier[1] not in arrays:
+        #         raise Exception("Array not declared")
+
+    def verify_declaration(self, identifier):
+        if len(identifier) == 2 and identifier[1] not in variables:
+            raise Exception("Variable not declared")
+
+    def initialize_variable(self, identifier):
+        initialized_variables.add(identifier[1])
+
     def load_constant_value(self, value):
         instructions_counter = 0
         current_instructions = '\nRESET a'
@@ -87,12 +101,8 @@ class Compiler(Parser):
             # temp_vars.remove(id[1])
 
     def substitute_and_store_loop_values(self, value1, value2, LOOP_ITERATOR, increment):
-        # if increment:
         first_value = value1
         second_value = value2
-        # else:
-        #     first_value = value2
-        #     second_value = value1
         if increment:
             LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
             LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
@@ -155,6 +165,7 @@ class Compiler(Parser):
     @_('identifier ASSIGN expression ";"')
     def command(self, p):
         self.verify_variable(p.identifier)
+        self.initialize_variable(p.identifier)
         return self.concat_commands(p.expression, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(p.identifier), ('\nSTORE f a', 1))
 
     @_('IF condition THEN commands ELSE commands ENDIF')
@@ -172,6 +183,13 @@ class Compiler(Parser):
     @_('REPEAT commands UNTIL condition ";"')
     def command(self, p):
         return self.concat_commands(p.commands, p.condition, (f'\nJZERO a 2\nJUMP -{1 + p.commands[1] + p.condition[1]}', 2))
+
+    # def loop(self,IS_UPTO_TYPE):
+    #     STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, IS_UPTO_TYPE)
+    #     LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, IS_UPTO_TYPE)
+    #     VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
+    #     self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
+    #     return self.concat_commands(STORE_ITERATOR_COMMANDS, VERIFY_LOOP_CONDITION, p.commands, LOAD_ITERATOR_INCREMENT_AND_SAVE, (f'\nJZERO a -{1 + LOAD_ITERATOR_INCREMENT_AND_SAVE[1] + p.commands[1]}', 1))
 
     @_('FOR iterator FROM value TO value DO commands ENDFOR')
     def command(self, p):
@@ -196,6 +214,8 @@ class Compiler(Parser):
 
     @_('READ identifier ";"')
     def command(self, p):
+        self.verify_declaration(p.identifier)
+        self.initialize_variable(p.identifier)
         return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nGET a ', 1))
 
     @_('WRITE value ";"')
@@ -262,6 +282,7 @@ class Compiler(Parser):
 
     @_('identifier')
     def value(self, p):
+        self.verify_initialization(p.identifier)
         return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nLOAD a a', 1))
 
     @_('PIDENTIFIER')
@@ -270,6 +291,7 @@ class Compiler(Parser):
 
     @_('PIDENTIFIER "(" PIDENTIFIER ")"')
     def identifier(self, p):
+        self.verify_initialization(('identifier', p.PIDENTIFIER1))
         return p
 
     @_('PIDENTIFIER "(" NUM ")"')
@@ -278,20 +300,18 @@ class Compiler(Parser):
 
 
 ########################################################################################################################
-def debug():
-    for tok in lexer.tokenize(open(sys.argv[1], "r").read()):
-        print('type=%r, value=%r' % (tok.type, tok.value))
-
+# def debug():
+#     for tok in lexer.tokenize(open(sys.argv[1], "r").read()):
+#         print('type=%r, value=%r' % (tok.type, tok.value))
 
 if __name__ == '__main__':
+    # try:
     lexer = LanguageLexer()
     parser = Compiler()
-    # debug()
-
     output = parser.parse(lexer.tokenize(open(sys.argv[1], "r").read())).split('\n', 1)[1]
-
     print(variables)
     print(arrays)
-
     fw = open(sys.argv[2], "w")
     fw.write(output)
+# except:
+#     raise Exception("An exception occurred during parsing")
