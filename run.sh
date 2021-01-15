@@ -1,0 +1,1 @@
+ ./maszyna-wirtualna  output

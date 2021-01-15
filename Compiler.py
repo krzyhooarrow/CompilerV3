@@ -94,13 +94,13 @@ class Compiler(Parser):
         #     first_value = value2
         #     second_value = value1
         if increment:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET b\nADD b a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE b a', 1))
+            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
             LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC a\nSUB a b\nRESET b\nADD b a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE b a', 1))
+            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC a\nSUB a f\nRESET f\nADD f a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
         else:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET b\nADD b a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE b a', 1))
+            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(first_value, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
             LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC b\nSUB b a', 2), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE b a', 1))
+            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, second_value, ('\nINC f\nSUB f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
 
         return (STORE_ITERATIONS_COUNTER, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
 

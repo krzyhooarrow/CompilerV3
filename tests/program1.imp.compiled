@@ -1,0 +1,391 @@
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+RESET b
+ADD b a
+RESET a
+SHL a
+STORE b a
+RESET a
+SHL a
+LOAD a a
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+STORE b a
+RESET a
+SHL a
+LOAD a a
+RESET f
+ADD f a
+RESET e
+ADD e a
+RESET a
+SHL a
+INC a
+SHL a
+INC f
+SUB f a
+RESET a
+ADD a f
+JZERO a 100
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+INC a
+STORE b a
+RESET a
+SHL a
+INC a
+RESET c
+ADD c a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+LOAD a a
+RESET e
+ADD e a
+STORE c a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+LOAD a a
+DEC a
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+STORE b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+INC a
+LOAD a a
+DEC a
+JZERO a 18
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+INC a
+STORE b a
+JUMP -82
+RESET a
+SHL a
+INC a
+SHL a
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+STORE b a
+RESET a
+SHL a
+INC a
+SHL a
+RESET f
+ADD f a
+RESET e
+ADD e a
+RESET a
+SHL a
+LOAD a a
+INC a
+SUB a f
+JZERO a 210
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+STORE b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+LOAD a a
+RESET e
+ADD e a
+LOAD a a
+RESET b
+ADD b a
+RESET a
+SHL a
+RESET c
+ADD c a
+SUB a b
+JZERO a 2
+JUMP 3
+SUB b c
+JZERO b 3
+RESET a
+INC a
+JODD a 3
+INC a
+JUMP 2
+RESET a
+JZERO a 2
+JUMP 103
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+LOAD a a
+RESET f
+ADD f a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+LOAD a a
+ADD a f
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+STORE b a
+RESET a
+SHL a
+LOAD a a
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+LOAD a a
+SUB a b
+JZERO a 3
+RESET a
+JUMP 2
+INC a
+JZERO a 3
+RESET a
+JUMP 2
+INC a
+JZERO a 2
+JUMP 38
+RESET a
+SHL a
+RESET c
+ADD c a
+RESET a
+SHL a
+INC a
+LOAD a a
+RESET e
+ADD e a
+STORE c a
+RESET a
+SHL a
+INC a
+LOAD a a
+RESET f
+ADD f a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+LOAD a a
+ADD a f
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+STORE b a
+JUMP -56
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+PUT a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+LOAD a a
+INC a
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+STORE b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+LOAD a a
+DEC a
+JZERO a 17
+RESET b
+ADD b a
+RESET a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SHL a
+SHL a
+INC a
+STORE b a
+JUMP -193
+HALT
