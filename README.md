@@ -87,9 +87,9 @@ Prints value converted to binary.
 
 ### Writual-machine
 
-Machine consists of memory cells ***p[i]*** labeled as _0,1,2..._ up to _2^62_ and orders counter ***k***. 
+Machine consists of 6 registers (r_{a},r_{b},r_{c},r_{d},r_{e},r_{f}), and  memory cells ***p[i]*** labeled as _0,1,2..._ up to _2^62_ and orders counter ***k***. 
 Machine performs step by step each order starting from 0. 
-Comments are allowed, starts from ***#*** and are valid to the end of line.
+Comments are allowed, only in square braces.
 Table below contains possible orders, their interpretation and cost . 
 
 | ***COMMAND*** | ***INTERPRETATION*** |***COST***|
