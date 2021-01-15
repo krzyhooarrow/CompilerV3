@@ -183,7 +183,7 @@ class Compiler(Parser):
 
     @_('WHILE condition DO commands ENDWHILE')
     def command(self, p):
-        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {2 + p.commands[1]}', 2), p.commands, (f'\nJUMP -{3 + p.commands[1] + p.condition[1]}', 1))
+        return self.concat_commands(p.condition, (f'\nJZERO a 2\nJUMP {2 + p.commands[1]}', 2), p.commands, (f'\nJUMP -{2 + p.commands[1] + p.condition[1]}', 1))
 
     @_('REPEAT commands UNTIL condition ";"')
     def command(self, p):
