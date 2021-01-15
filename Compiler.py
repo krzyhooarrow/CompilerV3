@@ -31,9 +31,6 @@ class Compiler(Parser):
     def verify_initialization(self, identifier):
         if len(identifier) == 2 and identifier[1] not in initialized_variables:
             raise Exception("Variable not initialized: " + str(identifier))
-        # elif len(identifier) == 5:
-        #     if identifier[1] not in arrays:
-        #         raise Exception("Array not declared")
 
     def verify_declaration(self, identifier):
         if len(identifier) == 2 and identifier[1] not in variables:
@@ -97,8 +94,6 @@ class Compiler(Parser):
     def remove_temporary_variables(self, *PIDENTIFIER):
         for id in PIDENTIFIER:
             variables.pop(id[1])
-            # initialized_variables.remove(id[1])
-            # temp_vars.remove(id[1])
 
     def substitute_and_store_loop_values(self, value1, value2, LOOP_ITERATOR, increment):
         if increment:
@@ -291,18 +286,10 @@ class Compiler(Parser):
 
 
 ########################################################################################################################
-# def debug():
-#     for tok in lexer.tokenize(open(sys.argv[1], "r").read()):
-#         print('type=%r, value=%r' % (tok.type, tok.value))
-
 if __name__ == '__main__':
-    # try:
     lexer = LanguageLexer()
     parser = Compiler()
     output = parser.parse(lexer.tokenize(open(sys.argv[1], "r").read())).split('\n', 1)[1]
-    print(variables)
-    print(arrays)
     fw = open(sys.argv[2], "w")
     fw.write(output)
-# except:
-#     raise Exception("An exception occurred during parsing")
+
