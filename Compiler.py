@@ -96,15 +96,10 @@ class Compiler(Parser):
             variables.pop(id[1])
 
     def substitute_and_store_loop_values(self, value1, value2, LOOP_ITERATOR, increment):
-        if increment:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(value1, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
-            LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, value2, ('\nINC a\nSUB a f\nRESET f\nADD f a', 4), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
-        else:
-            LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(value1, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
-            LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
-            STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, value2, ('\nINC f\nSUB f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
-
+        VALIDATE_DIFF = ('\nINC a\nSUB a f\nRESET f\nADD f a', 4) if increment else ('\nINC f\nSUB f a', 2)
+        LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE = self.concat_commands(value1, ('\nRESET f\nADD f a', 2), self.load_proper_cell_for_variable(LOOP_ITERATOR), ('\nSTORE f a', 1))
+        LOOP_ITERATIONS_COUNTER = self.create_temporary_variable()
+        STORE_ITERATIONS_COUNTER = self.concat_commands(LOAD_FIRST_VALUE_AND_STORE_AS_FIRST_ITERATOR_VALUE, value2, VALIDATE_DIFF, self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), ('\nSTORE f a', 1))
         return (STORE_ITERATIONS_COUNTER, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
 
     def load_variable_increment_or_decrement_and_save(self, variable, increment):
@@ -194,7 +189,7 @@ class Compiler(Parser):
 
     @_('PIDENTIFIER')
     def iterator(self, p):
-        self.initialize_variable(('identifier',p.PIDENTIFIER))
+        self.initialize_variable(('identifier', p.PIDENTIFIER))
         self.define_new_variable(p.PIDENTIFIER)
         return ('value', p.PIDENTIFIER)
 
@@ -292,4 +287,3 @@ if __name__ == '__main__':
     output = parser.parse(lexer.tokenize(open(sys.argv[1], "r").read())).split('\n', 1)[1]
     fw = open(sys.argv[2], "w")
     fw.write(output)
-
