@@ -9,6 +9,7 @@ arrays = {}
 initialized_variables = set()
 current_instruction = 0
 temp_vars = set()
+iterators = []
 
 
 class Compiler(Parser):
@@ -22,6 +23,8 @@ class Compiler(Parser):
         return instructions_with_counter
 
     def verify_variable(self, identifier):
+        if identifier in iterators:
+            raise Exception("Cannot modify iterator inside a loop")
         if len(identifier) == 2 and identifier[1] not in variables:
             raise Exception("Variable not declared")
         elif len(identifier) == 5:
@@ -112,7 +115,7 @@ class Compiler(Parser):
         return self.concat_commands(UPDATE_ITERATOR, LOAD_ITERATIONS_COUNTER)
 
     def loop(self, p, IS_UPTO_TYPE):
-        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.value0, p.value1, p.iterator, IS_UPTO_TYPE)
+        STORE_ITERATOR_COMMANDS, LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER = self.substitute_and_store_loop_values(p.loop_value0, p.loop_value1, p.iterator, IS_UPTO_TYPE)
         LOAD_ITERATOR_INCREMENT_AND_SAVE = self.verify_iterator_increment_and_save(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER, IS_UPTO_TYPE)
         VERIFY_LOOP_CONDITION = self.concat_commands(self.load_proper_cell_for_variable(LOOP_ITERATIONS_COUNTER), (f'\nLOAD b a\nJZERO b {2 + p.commands[1] + LOAD_ITERATOR_INCREMENT_AND_SAVE[1]}', 2))
         self.remove_temporary_variables(LOOP_ITERATOR, LOOP_ITERATIONS_COUNTER)
@@ -179,25 +182,37 @@ class Compiler(Parser):
     def command(self, p):
         return self.concat_commands(p.commands, p.condition, (f'\nJZERO a 2\nJUMP -{1 + p.commands[1] + p.condition[1]}', 2))
 
-    @_('FOR iterator FROM value TO value DO commands ENDFOR')
+    @_('FOR iterator FROM loop_value TO loop_value DO commands ENDFOR')
     def command(self, p):
         return self.loop(p, True)
 
-    @_('FOR iterator FROM value DOWNTO value DO commands ENDFOR')
+    @_('FOR iterator FROM loop_value DOWNTO loop_value DO commands ENDFOR')
     def command(self, p):
         return self.loop(p, False)
+
+    @_('NUM')
+    def loop_value(self, p):
+        return self.load_constant_value(p.NUM)
+
+    @_('identifier')
+    def loop_value(self, p):
+        if iterators[-1] == p.identifier:
+            raise Exception("Cannot use iterator as loop value")
+        self.verify_initialization(p.identifier)
+        return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nLOAD a a', 1))
 
     @_('PIDENTIFIER')
     def iterator(self, p):
         self.initialize_variable(('identifier', p.PIDENTIFIER))
         self.define_new_variable(p.PIDENTIFIER)
+        iterators.append(('identifier', p.PIDENTIFIER))
         return ('value', p.PIDENTIFIER)
 
     @_('READ identifier ";"')
     def command(self, p):
         self.verify_declaration(p.identifier)
         self.initialize_variable(p.identifier)
-        return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nGET a ', 1))
+        return self.concat_commands(self.load_proper_cell_for_variable(p.identifier), ('\nGET a', 1))
 
     @_('WRITE value ";"')
     def command(self, p):
